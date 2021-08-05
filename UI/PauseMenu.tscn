@@ -1,0 +1,76 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://UI/PauseMenu.gd" type="Script" id=1]
+[ext_resource path="res://Sfx/Nope.wav" type="AudioStream" id=2]
+[ext_resource path="res://Sfx/Buy.wav" type="AudioStream" id=3]
+[ext_resource path="res://Sfx/Ach.wav" type="AudioStream" id=4]
+[ext_resource path="res://nice_font.tres" type="DynamicFont" id=5]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0, 0, 0, 0.784314 )
+
+[node name="PauseMenu" type="PanelContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_styles/panel = SubResource( 1 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="H" type="HBoxContainer" parent="."]
+margin_right = 1024.0
+margin_bottom = 600.0
+custom_constants/separation = 40
+alignment = 1
+
+[node name="Box" type="CenterContainer" parent="H"]
+margin_left = 492.0
+margin_right = 492.0
+margin_bottom = 600.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Options" type="VBoxContainer" parent="H/Box"]
+margin_top = 300.0
+margin_bottom = 300.0
+
+[node name="Ach" type="GridContainer" parent="H"]
+margin_left = 532.0
+margin_top = 300.0
+margin_right = 532.0
+margin_bottom = 300.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+columns = 2
+
+[node name="Buy" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 3 )
+
+[node name="Nope" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 2 )
+
+[node name="Ach" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 4 )
+
+[node name="Control" type="Control" parent="."]
+margin_right = 1024.0
+margin_bottom = 600.0
+mouse_filter = 2
+
+[node name="Version" type="Label" parent="Control"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -50.0
+margin_bottom = -25.0
+grow_horizontal = 0
+grow_vertical = 0
+custom_fonts/font = ExtResource( 5 )
+custom_colors/font_color = Color( 1, 0, 0, 1 )
+text = "VER!0.3"
+__meta__ = {
+"_edit_use_anchors_": false
+}

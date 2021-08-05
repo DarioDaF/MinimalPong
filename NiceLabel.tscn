@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://NiceLabel.gd" type="Script" id=1]
+[ext_resource path="res://nice_font.tres" type="DynamicFont" id=2]
+
+[node name="NiceLabel" type="Label"]
+custom_fonts/font = ExtResource( 2 )
+custom_colors/font_color = Color( 0, 1, 0, 1 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="BG" type="Label" parent="."]
+show_behind_parent = true
+margin_right = 40.0
+margin_bottom = 14.0
+custom_fonts/font = ExtResource( 2 )
+custom_colors/font_color = Color( 0.541176, 0.764706, 0.541176, 0.235294 )
+__meta__ = {
+"_edit_use_anchors_": false
+}

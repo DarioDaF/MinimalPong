@@ -1,0 +1,384 @@
+[gd_scene load_steps=27 format=2]
+
+[ext_resource path="res://Shape.gd" type="Script" id=1]
+[ext_resource path="res://Paddle.tscn" type="PackedScene" id=2]
+[ext_resource path="res://PlayerTwo.gd" type="Script" id=3]
+[ext_resource path="res://Ball.gd" type="Script" id=4]
+[ext_resource path="res://Board.gd" type="Script" id=5]
+[ext_resource path="res://PlayerOne.gd" type="Script" id=6]
+[ext_resource path="res://StaminaBar.gd" type="Script" id=7]
+[ext_resource path="res://NiceLabel.tscn" type="PackedScene" id=8]
+[ext_resource path="res://Money.gd" type="Script" id=9]
+[ext_resource path="res://UI/PauseMenu.tscn" type="PackedScene" id=10]
+[ext_resource path="res://Ads/GenderNode.png" type="Texture" id=11]
+[ext_resource path="res://Ads.gd" type="Script" id=12]
+[ext_resource path="res://Sfx/Bounce.wav" type="AudioStream" id=13]
+[ext_resource path="res://Sfx/Loss.wav" type="AudioStream" id=14]
+[ext_resource path="res://Sfx/Money.wav" type="AudioStream" id=15]
+
+[sub_resource type="PhysicsMaterial" id=1]
+friction = 0.0
+bounce = 1.0
+
+[sub_resource type="ParticlesMaterial" id=2]
+emission_shape = 1
+emission_sphere_radius = 10.0
+flag_disable_z = true
+spread = 15.0
+gravity = Vector3( 0, 0, 0 )
+initial_velocity = 50.0
+orbit_velocity = 0.0
+orbit_velocity_random = 0.0
+scale = 3.0
+hue_variation = 0.16
+hue_variation_random = 1.0
+
+[sub_resource type="CircleShape2D" id=3]
+radius = 15.0
+
+[sub_resource type="RectangleShape2D" id=4]
+extents = Vector2( 512, 10 )
+
+[sub_resource type="RectangleShape2D" id=5]
+extents = Vector2( 512, 10 )
+
+[sub_resource type="RectangleShape2D" id=6]
+extents = Vector2( 50, 320 )
+
+[sub_resource type="Shader" id=7]
+code = "shader_type canvas_item;
+
+uniform float l = 20.;
+
+void fragment() {
+	if(mod(FRAGCOORD.y - l/2., 2.*l) < l) {
+		COLOR.a = 0.;
+	}
+}
+"
+
+[sub_resource type="ShaderMaterial" id=8]
+shader = SubResource( 7 )
+shader_param/l = 20.0
+
+[sub_resource type="Shader" id=9]
+code = "/*
+Godot 3 2D CRT Shader.
+A 2D shader for Godot 3 simulating a CRT..
+Author: hiulit
+Repository: https://github.com/hiulit/Godot-3-2D-CRT-Shader
+Issues: https://github.com/hiulit/Godot-3-2D-CRT-Shader/issues
+License: MIT https://github.com/hiulit/Godot-3-2D-CRT-Shader/blob/master/LICENSE
+*/
+
+shader_type canvas_item;
+
+const float PI = 3.14159265359;
+
+uniform vec2 screen_size = vec2(320.0, 180.0);
+uniform bool show_curvature = true;
+uniform float curvature_x_amount : hint_range(3.0, 15.0, 0.01) = float(6.0); 
+uniform float curvature_y_amount : hint_range(3.0, 15.0, 0.01) = float(4.0);
+uniform vec4 corner_color : hint_color = vec4(0.0, 0.0, 0.0, 1.0);
+uniform bool show_vignette = true;
+uniform float vignette_opacity : hint_range(0.0, 1.0, 0.01) = 0.2;
+uniform bool show_horizontal_scan_lines = true;
+uniform float horizontal_scan_lines_amount : hint_range(0.0, 180.0, 0.1) = 180.0;
+uniform float horizontal_scan_lines_opacity : hint_range(0.0, 1.0, 0.01) = 1.0;
+uniform bool show_vertical_scan_lines = false;
+uniform float vertical_scan_lines_amount : hint_range(0.0, 320.0, 0.1) = 320.0;
+uniform float vertical_scan_lines_opacity : hint_range(0.0, 1.0, 0.01) = 1.0;
+uniform float boost : hint_range(1.0, 2.0, 0.01) = 1.2;
+uniform float aberration_amount : hint_range(0.0, 10.0, 0.01) = 0.0;
+
+vec2 uv_curve(vec2 uv) {
+	if (show_curvature) {
+		uv = uv * 2.0 - 1.0;
+		vec2 offset = abs(uv.yx) / vec2(curvature_x_amount, curvature_y_amount);
+		uv = uv + uv * offset * offset;
+		uv = uv * 0.5 + 0.5;
+	}
+
+	return uv;
+}
+
+
+void fragment() {
+	vec2 uv = uv_curve(UV);
+	vec2 screen_uv = uv_curve(SCREEN_UV);
+	vec3 color = texture(SCREEN_TEXTURE, screen_uv).rgb;
+
+	if (aberration_amount > 0.0) {
+		float adjusted_amount = aberration_amount / screen_size.x;
+		color.r = texture(SCREEN_TEXTURE, vec2(screen_uv.x + adjusted_amount, screen_uv.y)).r;
+		color.g = texture(SCREEN_TEXTURE, screen_uv).g;
+		color.b = texture(SCREEN_TEXTURE, vec2(screen_uv.x - adjusted_amount, screen_uv.y)).b;
+	}
+
+	if (show_vignette) {
+		float vignette = uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y);
+		vignette = clamp(pow((screen_size.x / 4.0) * vignette, vignette_opacity), 0.0, 1.0);
+		color *= vignette;
+	}
+
+	if (show_horizontal_scan_lines) {
+		float s = sin(screen_uv.y * horizontal_scan_lines_amount * PI * 2.0);
+		s = (s * 0.5 + 0.5) * 0.9 + 0.1;
+		vec4 scan_line = vec4(vec3(pow(s, horizontal_scan_lines_opacity)), 1.0);
+		color *= scan_line.rgb;
+	}
+
+	if (show_vertical_scan_lines) {
+		float s = sin(screen_uv.x * vertical_scan_lines_amount * PI * 2.0);
+		s = (s * 0.5 + 0.5) * 0.9 + 0.1;
+		vec4 scan_line = vec4(vec3(pow(s, vertical_scan_lines_opacity)), 1.0);
+		color *= scan_line.rgb;
+	}
+
+	if (show_horizontal_scan_lines || show_vertical_scan_lines) {
+		color *= boost;
+	}
+
+	// Fill the blank space of the corners, left by the curvature, with black.
+	if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+		color = corner_color.rgb;
+	}
+
+	COLOR = vec4(color, 1.0);
+}
+"
+
+[sub_resource type="ShaderMaterial" id=10]
+shader = SubResource( 9 )
+shader_param/screen_size = Vector2( 1024, 600 )
+shader_param/show_curvature = true
+shader_param/curvature_x_amount = 10.0
+shader_param/curvature_y_amount = 6.0
+shader_param/corner_color = Color( 0, 0, 0, 1 )
+shader_param/show_vignette = true
+shader_param/vignette_opacity = 0.2
+shader_param/show_horizontal_scan_lines = true
+shader_param/horizontal_scan_lines_amount = 180.0
+shader_param/horizontal_scan_lines_opacity = 0.4
+shader_param/show_vertical_scan_lines = false
+shader_param/vertical_scan_lines_amount = 320.0
+shader_param/vertical_scan_lines_opacity = 1.0
+shader_param/boost = 1.2
+shader_param/aberration_amount = 1.0
+
+[sub_resource type="Animation" id=11]
+resource_name = "Ad"
+length = 30.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("Img:self_modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 2, 10, 12 ),
+"transitions": PoolRealArray( 1, 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
+}
+tracks/1/type = "method"
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 30 ),
+"transitions": PoolRealArray( 1 ),
+"values": [ {
+"args": [  ],
+"method": "next_ad"
+} ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("Img:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 12 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 1,
+"values": [ true, false ]
+}
+
+[node name="Board" type="Node2D" groups=[
+"settings_listeners",
+]]
+script = ExtResource( 5 )
+
+[node name="PlayerOne" parent="." groups=[
+"settings_listeners",
+] instance=ExtResource( 2 )]
+script = ExtResource( 6 )
+
+[node name="StaminaBar" type="Node2D" parent="PlayerOne"]
+script = ExtResource( 7 )
+
+[node name="Ball" type="RigidBody2D" parent="." groups=[
+"settings_listeners",
+]]
+position = Vector2( 474.801, 245.819 )
+collision_layer = 3
+physics_material_override = SubResource( 1 )
+gravity_scale = 0.0
+contacts_reported = 1
+contact_monitor = true
+linear_velocity = Vector2( -100, 0 )
+linear_damp = 0.0
+script = ExtResource( 4 )
+
+[node name="Bounce" type="AudioStreamPlayer" parent="Ball"]
+stream = ExtResource( 13 )
+
+[node name="Timeout" type="Timer" parent="Ball"]
+wait_time = 20.0
+
+[node name="Particles" type="Particles2D" parent="Ball"]
+amount = 50
+lifetime = 2.0
+local_coords = false
+process_material = SubResource( 2 )
+
+[node name="Collision" type="CollisionShape2D" parent="Ball"]
+shape = SubResource( 3 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Borders" type="StaticBody2D" parent="."]
+
+[node name="Top" type="CollisionShape2D" parent="Borders"]
+position = Vector2( 512, -5 )
+shape = SubResource( 4 )
+
+[node name="Bottom" type="CollisionShape2D" parent="Borders"]
+position = Vector2( 512, 605 )
+shape = SubResource( 5 )
+
+[node name="PlayerTwoDeath" type="Area2D" parent="."]
+position = Vector2( 1064, 300 )
+collision_layer = 2
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerTwoDeath"]
+shape = SubResource( 6 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="PlayerOneDeath" type="Area2D" parent="."]
+position = Vector2( -40, 300 )
+collision_layer = 2
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerOneDeath"]
+shape = SubResource( 6 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="PlayerTwo" parent="." groups=[
+"settings_listeners",
+] instance=ExtResource( 2 )]
+position = Vector2( 984, 185.722 )
+script = ExtResource( 3 )
+ball_path = NodePath("../Ball")
+
+[node name="MidField" type="Line2D" parent="."]
+material = SubResource( 8 )
+points = PoolVector2Array( 512, 0, 512, 600 )
+width = 5.0
+default_color = Color( 1, 1, 1, 1 )
+
+[node name="CRT" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CRT"]
+material = SubResource( 10 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_top = 1.88988
+margin_bottom = 1.88989
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GUI" type="CanvasLayer" parent="."]
+pause_mode = 2
+
+[node name="Money" type="Control" parent="GUI"]
+anchor_left = 1.0
+anchor_right = 1.0
+margin_left = -469.715
+margin_top = 29.9427
+margin_right = -429.715
+margin_bottom = 69.9427
+script = ExtResource( 9 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="NiceLabel" parent="GUI/Money" instance=ExtResource( 8 )]
+text = "!!!!!!!!!0  $"
+
+[node name="Plus" type="VBoxContainer" parent="GUI/Money"]
+margin_left = 0.740051
+margin_top = 49.8105
+margin_right = 283.74
+margin_bottom = 189.811
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PauseMenu" parent="GUI" instance=ExtResource( 10 )]
+visible = false
+
+[node name="Ads" type="CenterContainer" parent="GUI"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_top = -150.0
+mouse_filter = 2
+script = ExtResource( 12 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Img" type="TextureRect" parent="GUI/Ads"]
+self_modulate = Color( 1, 1, 1, 0 )
+margin_left = 362.0
+margin_top = 15.0
+margin_right = 662.0
+margin_bottom = 135.0
+rect_min_size = Vector2( 300, 120 )
+mouse_default_cursor_shape = 2
+texture = ExtResource( 11 )
+expand = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="GUI/Ads"]
+anims/Ad = SubResource( 11 )
+
+[node name="Loss" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 14 )
+
+[node name="Money" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 15 )
+
+[connection signal="body_entered" from="Ball" to="Ball" method="_on_Ball_body_entered"]
+[connection signal="count_move" from="Ball" to="." method="_on_Ball_count_move"]
+[connection signal="out_of_bounds" from="Ball" to="." method="_on_Ball_out_of_bounds"]
+[connection signal="timeout" from="Ball/Timeout" to="." method="_on_Timeout_timeout"]
+[connection signal="body_entered" from="PlayerTwoDeath" to="." method="_on_PlayerTwoDeath_body_entered"]
+[connection signal="body_entered" from="PlayerOneDeath" to="." method="_on_PlayerOneDeath_body_entered"]
+[connection signal="ad_conversion" from="GUI/Ads" to="GUI/PauseMenu" method="_on_Ads_ad_conversion"]
+[connection signal="gui_input" from="GUI/Ads/Img" to="GUI/Ads" method="_on_Img_gui_input"]
